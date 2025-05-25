@@ -1,24 +1,29 @@
+<!DOCTYPE html>
 <html lang="ro">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>To-Do List</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap">
     <link rel="stylesheet" href="styles.css">
     <script src="script.js" defer></script>
 </head>
 <body>
-    <div class="container">
+    <div class="glass-container">
         <div class="todo-app">
-            <h2>To-Do List<img src="images/icon.png"></h2>
-            <div class="row">
-                <input type="text" id="inputBox" placeholder="Adaugă o sarcină...">
-                <button onclick="addTask()">Adaugă</button>
+            <div class="app-header">
+                <h1>Tasks</h1>
+                <div class="app-icon">✓</div>
             </div>
-            <ul id ="list-container">
-                <!-- <li class="checked">Task #1</li>
-                <li>Task #2</li>
-                <li>Task #3</li> -->
-            </ul>
+            <div class="input-row">
+                <input type="text" id="inputBox" placeholder="Add new task..." autocomplete="off">
+                <button onclick="addTask()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 4V20M4 12H20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
+            </div>
+            <ul id="list-container"></ul>
         </div>
     </div>
 </body>
