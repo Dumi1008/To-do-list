@@ -437,3 +437,33 @@
                 min-width: auto;
             }
         }
+
+    .task-dates {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.task-start {
+    font-size: 12px;
+    color: var(--text-light);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.task-start svg {
+    width: 14px;
+    height: 14px;
+}
+
+.edit-start {
+    flex: 1;
+    padding: 10px 12px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    font-size: 14px;
+    outline: none;
+    background: rgba(255, 255, 255, 0.9);
+    min-width: 120px;
+}

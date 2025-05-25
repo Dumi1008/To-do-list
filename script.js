@@ -4,7 +4,11 @@
         const emptyState = document.getElementById('emptyState');
 
         document.addEventListener('DOMContentLoaded', function() {
-            // Initialize date picker
+            // Initialize date pickers
+            flatpickr("#startDate", {
+                dateFormat: "Y-m-d"
+            });
+            
             flatpickr("#dueDate", {
                 dateFormat: "Y-m-d",
                 minDate: "today"
@@ -30,6 +34,7 @@
                 return;
             }
 
+            const startDate = document.getElementById('startDate').value;
             const dueDate = document.getElementById('dueDate').value;
             const priority = document.getElementById('taskPriority').value;
             
@@ -39,9 +44,10 @@
             taskItem.dataset.id = taskId;
             taskItem.dataset.status = "todo";
             taskItem.dataset.priority = priority;
+            if(startDate) taskItem.dataset.start = startDate;
             if(dueDate) taskItem.dataset.due = dueDate;
             
-            taskItem.innerHTML = createTaskHTML(taskText, priority, dueDate, 'todo');
+            taskItem.innerHTML = createTaskHTML(taskText, priority, startDate, dueDate, 'todo');
             
             listContainer.insertBefore(taskItem, listContainer.firstChild);
             resetForm();
@@ -53,7 +59,7 @@
             setupTaskButtons(taskItem);
         }
 
-        function createTaskHTML(text, priority, dueDate, status) {
+        function createTaskHTML(text, priority, startDate, dueDate, status) {
             return `
                 <div class="task-content">
                     <div class="task-main">
@@ -80,16 +86,26 @@
                             <button class="status-btn status-in-progress ${status === 'in-progress' ? 'active' : ''}">In Progress</button>
                             <button class="status-btn status-done ${status === 'done' ? 'active' : ''}">Done</button>
                         </div>
-                        ${dueDate ? `
-                        <div class="task-due ${isOverdue(dueDate) ? 'overdue' : ''}">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                <path d="M19 4H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path>
-                                <path d="M16 2v4"></path>
-                                <path d="M8 2v4"></path>
-                                <path d="M3 10h18"></path>
-                            </svg>
-                            ${formatDueDate(dueDate)}
-                        </div>` : ''}
+                        <div class="task-dates">
+                            ${startDate ? `
+                            <div class="task-start">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <polyline points="12,6 12,12 16,14"></polyline>
+                                </svg>
+                                Start: ${formatDueDate(startDate)}
+                            </div>` : ''}
+                            ${dueDate ? `
+                            <div class="task-due ${isOverdue(dueDate) ? 'overdue' : ''}">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M19 4H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path>
+                                    <path d="M16 2v4"></path>
+                                    <path d="M8 2v4"></path>
+                                    <path d="M3 10h18"></path>
+                                </svg>
+                                Due: ${formatDueDate(dueDate)}
+                            </div>` : ''}
+                        </div>
                     </div>
                 </div>
             `;
@@ -138,6 +154,7 @@
 
         function editTask(taskItem) {
             const taskTitle = taskItem.querySelector('.task-title').textContent;
+            const currentStart = taskItem.dataset.start || '';
             const currentDue = taskItem.dataset.due || '';
             const currentPriority = taskItem.dataset.priority;
             
@@ -145,7 +162,8 @@
                 <div class="edit-form">
                     <input type="text" class="edit-input" value="${taskTitle}">
                     <div class="edit-options">
-                        <input type="date" class="edit-due" value="${currentDue}">
+                        <input type="date" class="edit-start" value="${currentStart}" placeholder="Start date">
+                        <input type="date" class="edit-due" value="${currentDue}" placeholder="Due date">
                         <select class="edit-priority">
                             <option value="low" ${currentPriority === 'low' ? 'selected' : ''}>Low</option>
                             <option value="medium" ${currentPriority === 'medium' ? 'selected' : ''}>Medium</option>
@@ -157,23 +175,20 @@
                 </div>
             `;
             
-            // Initialize date picker for edit form
-            flatpickr(".edit-due", {
-                dateFormat: "Y-m-d"
-            });
-            
             // Event listeners for edit buttons
             taskItem.querySelector('.save-edit').addEventListener('click', function() {
                 const newText = taskItem.querySelector('.edit-input').value.trim();
                 if(newText) {
+                    const newStart = taskItem.querySelector('.edit-start').value;
                     const newDue = taskItem.querySelector('.edit-due').value;
                     const newPriority = taskItem.querySelector('.edit-priority').value;
                     
+                    taskItem.dataset.start = newStart;
                     taskItem.dataset.due = newDue;
                     taskItem.dataset.priority = newPriority;
                     
                     const status = taskItem.dataset.status;
-                    taskItem.innerHTML = createTaskHTML(newText, newPriority, newDue, status);
+                    taskItem.innerHTML = createTaskHTML(newText, newPriority, newStart, newDue, status);
                     
                     setupTaskButtons(taskItem);
                     saveData();
@@ -183,9 +198,10 @@
             taskItem.querySelector('.cancel-edit').addEventListener('click', function() {
                 const status = taskItem.dataset.status;
                 const priority = taskItem.dataset.priority;
+                const start = taskItem.dataset.start;
                 const due = taskItem.dataset.due;
                 
-                taskItem.innerHTML = createTaskHTML(taskTitle, priority, due, status);
+                taskItem.innerHTML = createTaskHTML(taskTitle, priority, start, due, status);
                 setupTaskButtons(taskItem);
             });
         }
@@ -237,6 +253,7 @@
 
         function resetForm() {
             inputBox.value = '';
+            document.getElementById('startDate').value = '';
             document.getElementById('dueDate').value = '';
             document.getElementById('taskPriority').value = 'medium';
             inputBox.focus();
@@ -269,15 +286,14 @@
                     text: task.querySelector('.task-title').textContent,
                     status: task.dataset.status,
                     priority: task.dataset.priority,
+                    start: task.dataset.start || '',
                     due: task.dataset.due || ''
                 });
             });
-            // Using in-memory storage instead of localStorage for Claude artifacts
             window.taskData = tasks;
         }
 
         function showTasks() {
-            // Using in-memory storage instead of localStorage for Claude artifacts
             const savedTasks = window.taskData || [];
             
             savedTasks.forEach(task => {
@@ -286,9 +302,10 @@
                 taskItem.dataset.id = task.id;
                 taskItem.dataset.status = task.status;
                 taskItem.dataset.priority = task.priority;
+                if(task.start) taskItem.dataset.start = task.start;
                 if(task.due) taskItem.dataset.due = task.due;
                 
-                taskItem.innerHTML = createTaskHTML(task.text, task.priority, task.due, task.status);
+                taskItem.innerHTML = createTaskHTML(task.text, task.priority, task.start, task.due, task.status);
                 
                 listContainer.appendChild(taskItem);
                 setupTaskButtons(taskItem);
