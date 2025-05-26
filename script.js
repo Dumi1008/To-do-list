@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-function addTask() {
+async function addTask() {
     const taskText = inputBox.value.trim();
     if(!taskText) {
         inputBox.focus();
@@ -71,31 +71,43 @@ function addTask() {
     let startDate = document.getElementById('startDate').value;
     const dueDate = document.getElementById('dueDate').value;
     const priority = document.getElementById('taskPriority').value;
-    
-    // If no start date is set, use today's date
+
     if (!startDate) {
         startDate = getTodayDate();
         document.getElementById('startDate').value = startDate;
     }
-    
-    const taskId = Date.now();
+
+    // Creează task-ul în baza de date
+    const response = await fetch('http://localhost:3001/tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            text: taskText,
+            status: 'todo',
+            priority: priority,
+            start: startDate,
+            due: dueDate
+        })
+    });
+    const newTask = await response.json();
+
+    // Creează task-ul în UI și atașează _id-ul din MongoDB
     const taskItem = document.createElement('li');
     taskItem.className = 'task-item';
-    taskItem.dataset.id = taskId;
-    taskItem.dataset.status = "todo";
-    taskItem.dataset.priority = priority;
-    taskItem.dataset.start = startDate; // Always set start date
-    if(dueDate) taskItem.dataset.due = dueDate;
-    
-    taskItem.innerHTML = createTaskHTML(taskText, priority, startDate, dueDate, 'todo');
-    
+    taskItem.dataset.id = newTask._id; // Folosește _id de la MongoDB
+    taskItem.dataset.dbid = newTask._id;
+    taskItem.dataset.status = newTask.status;
+    taskItem.dataset.priority = newTask.priority;
+    taskItem.dataset.start = newTask.start;
+    if(newTask.due) taskItem.dataset.due = newTask.due;
+
+    taskItem.innerHTML = createTaskHTML(newTask.text, newTask.priority, newTask.start, newTask.due, newTask.status);
+
     listContainer.insertBefore(taskItem, listContainer.firstChild);
     resetForm();
-    saveData();
     animateTask(taskItem);
     updateEmptyState();
-    
-    // Add event listeners for task buttons
+
     setupTaskButtons(taskItem);
 }
 
@@ -154,32 +166,48 @@ function createTaskHTML(text, priority, startDate, dueDate, status) {
 function setupTaskButtons(taskItem) {
     // Status buttons
     taskItem.querySelectorAll('.status-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const status = this.classList.contains('status-todo') ? 'todo' :
-                          this.classList.contains('status-in-progress') ? 'in-progress' : 'done';
-            
-            taskItem.dataset.status = status;
-            taskItem.querySelectorAll('.status-btn').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            
-            // Animation for status change
-            if(status === 'done') {
-                taskItem.style.opacity = '0.7';
-                taskItem.querySelector('.task-title').style.textDecoration = 'line-through';
-                taskItem.style.borderLeft = '3px solid var(--done-color)';
-            } else if (status === 'in-progress') {
-                taskItem.style.opacity = '1';
-                taskItem.querySelector('.task-title').style.textDecoration = 'none';
-                taskItem.style.borderLeft = '3px solid var(--in-progress)';
-            } else {
-                taskItem.style.opacity = '1';
-                taskItem.querySelector('.task-title').style.textDecoration = 'none';
-                taskItem.style.borderLeft = '3px solid var(--text-light)';
-            }
-            
-            saveData();
-        });
+    btn.addEventListener('click', async function() {
+        const status = this.classList.contains('status-todo') ? 'todo' :
+                      this.classList.contains('status-in-progress') ? 'in-progress' : 'done';
+
+        taskItem.dataset.status = status;
+        taskItem.querySelectorAll('.status-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+
+        // Animation for status change
+        if(status === 'done') {
+            taskItem.style.opacity = '0.7';
+            taskItem.querySelector('.task-title').style.textDecoration = 'line-through';
+            taskItem.style.borderLeft = '3px solid var(--done-color)';
+        } else if (status === 'in-progress') {
+            taskItem.style.opacity = '1';
+            taskItem.querySelector('.task-title').style.textDecoration = 'none';
+            taskItem.style.borderLeft = '3px solid var(--in-progress)';
+        } else {
+            taskItem.style.opacity = '1';
+            taskItem.querySelector('.task-title').style.textDecoration = 'none';
+            taskItem.style.borderLeft = '3px solid var(--text-light)';
+        }
+
+        // Actualizează și în baza de date dacă există id
+        const taskId = taskItem.dataset.dbid || taskItem.dataset.id;
+        if (taskId) {
+            await fetch(`http://localhost:3001/tasks/${taskId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    text: taskItem.querySelector('.task-title').textContent,
+                    status: status,
+                    priority: taskItem.dataset.priority,
+                    start: taskItem.dataset.start,
+                    due: taskItem.dataset.due
+                })
+            });
+        }
+
+        saveData();
     });
+});
     
     // Edit button
     taskItem.querySelector('.edit-btn').addEventListener('click', function() {
@@ -187,7 +215,13 @@ function setupTaskButtons(taskItem) {
     });
     
     // Delete button
-    taskItem.querySelector('.delete-btn').addEventListener('click', function() {
+    taskItem.querySelector('.delete-btn').addEventListener('click', async function() {
+        // Dacă task-ul are un id din baza de date (MongoDB)
+        const taskId = taskItem.dataset.dbid; // presupunem că salvezi _id-ul MongoDB în data-dbId
+        if (taskId) {
+            await fetch(`http://localhost:3001/tasks/${taskId}`, { method: 'DELETE' });
+        }
+        // Animatie și ștergere din UI/localStorage
         taskItem.style.transform = 'translateX(100%)';
         taskItem.style.opacity = '0';
         setTimeout(() => {
@@ -197,6 +231,7 @@ function setupTaskButtons(taskItem) {
         }, 200);
     });
 }
+
 
 function editTask(taskItem) {
     const taskTitle = taskItem.querySelector('.task-title').textContent;
@@ -232,29 +267,47 @@ function editTask(taskItem) {
     });
     
     // Event listeners for edit buttons
-    taskItem.querySelector('.save-edit').addEventListener('click', function() {
-        const newText = taskItem.querySelector('.edit-input').value.trim();
-        if(newText) {
-            let newStart = taskItem.querySelector('.edit-start').value;
-            const newDue = taskItem.querySelector('.edit-due').value;
-            const newPriority = taskItem.querySelector('.edit-priority').value;
-            
-            // Ensure start date is set
-            if (!newStart) {
-                newStart = getTodayDate();
-            }
-            
-            taskItem.dataset.start = newStart;
-            taskItem.dataset.due = newDue;
-            taskItem.dataset.priority = newPriority;
-            
-            const status = taskItem.dataset.status;
-            taskItem.innerHTML = createTaskHTML(newText, newPriority, newStart, newDue, status);
-            
-            setupTaskButtons(taskItem);
-            saveData();
+    taskItem.querySelector('.save-edit').addEventListener('click', async function() {
+    const newText = taskItem.querySelector('.edit-input').value.trim();
+    if(newText) {
+        let newStart = taskItem.querySelector('.edit-start').value;
+        const newDue = taskItem.querySelector('.edit-due').value;
+        const newPriority = taskItem.querySelector('.edit-priority').value;
+
+        // Ensure start date is set
+        if (!newStart) {
+            newStart = getTodayDate();
         }
-    });
+
+        taskItem.dataset.start = newStart;
+        taskItem.dataset.due = newDue;
+        taskItem.dataset.priority = newPriority;
+
+        const status = taskItem.dataset.status;
+
+        // Actualizează și în baza de date dacă există id
+        const taskId = taskItem.dataset.dbid || taskItem.dataset.id;
+        if (taskId) {
+            await fetch(`http://localhost:3001/tasks/${taskId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    text: newText,
+                    status: status,
+                    priority: newPriority,
+                    start: newStart,
+                    due: newDue
+                })
+            });
+        }
+
+        taskItem.innerHTML = createTaskHTML(newText, newPriority, newStart, newDue, status);
+
+        setupTaskButtons(taskItem);
+        saveData();
+    }
+});
+
     
     taskItem.querySelector('.cancel-edit').addEventListener('click', function() {
         const status = taskItem.dataset.status;
@@ -354,24 +407,29 @@ function saveData() {
     localStorage.setItem('tasks', JSON.stringify(tasks));
 }
 
-function showTasks() {
-    const savedTasks = JSON.parse(localStorage.getItem('tasks')) || [];
-    
+async function showTasks() {
+    // Ia task-urile din baza de date, nu din localStorage
+    const response = await fetch('http://localhost:3001/tasks');
+    const savedTasks = await response.json();
+
+    listContainer.innerHTML = ''; // Golește lista
+
     savedTasks.forEach(task => {
         const taskItem = document.createElement('li');
         taskItem.className = 'task-item';
-        taskItem.dataset.id = task.id;
+        taskItem.dataset.id = task._id;
+        taskItem.dataset.dbid = task._id;
         taskItem.dataset.status = task.status;
         taskItem.dataset.priority = task.priority;
-        taskItem.dataset.start = task.start || getTodayDate(); // Ensure start date exists
-        if(task.due) taskItem.dataset.due = task.due;
-        
+        taskItem.dataset.start = task.start || getTodayDate();
+        if (task.due) taskItem.dataset.due = task.due;
+
         taskItem.innerHTML = createTaskHTML(task.text, task.priority, task.start || getTodayDate(), task.due, task.status);
-        
+
         listContainer.appendChild(taskItem);
         setupTaskButtons(taskItem);
-        
-        if(task.status === 'done') {
+
+        if (task.status === 'done') {
             taskItem.style.opacity = '0.7';
             taskItem.querySelector('.task-title').style.textDecoration = 'line-through';
             taskItem.style.borderLeft = '3px solid var(--done-color)';
@@ -381,7 +439,7 @@ function showTasks() {
             taskItem.style.borderLeft = '3px solid var(--text-light)';
         }
     });
-    
+
     updateEmptyState();
 }
 
@@ -392,3 +450,28 @@ inputBox.addEventListener("keypress", function(event) {
         addTask();
     }
 });
+
+
+document.getElementById('exportToDB').addEventListener('click', exportTasksToDB);
+
+async function exportTasksToDB() {
+    const savedTasks = JSON.parse(localStorage.getItem('tasks')) || [];
+    for (const task of savedTasks) {
+        // Trimite fiecare task către server
+        await fetch('http://localhost:3001/tasks', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                text: task.text,
+                status: task.status,
+                priority: task.priority,
+                start: task.start,
+                due: task.due
+            })
+        });
+    }
+    alert('Task-urile au fost exportate în baza de date!');
+}
+
