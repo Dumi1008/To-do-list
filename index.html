@@ -15,7 +15,14 @@
         <div class="todo-app">
             <div class="app-header">
                 <h1>Task Manager</h1>
-                <div class="app-icon">✓</div>
+                <div class="app-controls">
+                    <button id="themeToggle" class="theme-toggle">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 3V4M12 20V21M4 12H3M6.31412 6.31412L5.5 5.5M17.6859 6.31412L18.5 5.5M6.31412 17.69L5.5 18.5M17.6859 17.69L18.5 18.5M21 12H20M16 12C16 14.2091 14.2091 16 12 16C9.79086 16 8 14.2091 8 12C8 9.79086 9.79086 8 12 8C14.2091 8 16 9.79086 16 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                    <div class="app-icon">✓</div>
+                </div>
             </div>
             
             <div class="input-row">
@@ -45,7 +52,13 @@
             </div>
             
             <ul id="list-container">
-                <div class="empty-state" id="emptyState">No tasks yet. Add your first task above!</div>
+                <div class="empty-state" id="emptyState">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M9 5H7C5.89543 5 5 5.89543 5 7V19C5 20.1046 5.89543 21 7 21H17C18.1046 21 19 20.1046 19 19V7C19 5.89543 18.1046 5 17 5H15M9 5C9 6.10457 9.89543 7 11 7H13C14.1046 7 15 6.10457 15 5M9 5C9 3.89543 9.89543 3 11 3H13C14.1046 3 15 3.89543 15 5M12 12V16M12 16L15 13M12 16L9 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <h3>No tasks yet</h3>
+                    <p>Add your first task above to get started</p>
+                </div>
             </ul>
         </div>
     </div>

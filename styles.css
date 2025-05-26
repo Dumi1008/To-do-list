@@ -1,16 +1,35 @@
 :root {
-    --primary-color: #4361ee;
-    --primary-light: #e0e7ff;
-    --text-color: #1e293b;
-    --text-light: #64748b;
-    --bg-color: #f8fafc;
-    --glass-bg: rgba(255, 255, 255, 0.85);
+    --primary-color: #6366f1;
+    --primary-light: #4f46e5;
+    --primary-dark: #4338ca;
+    --text-color: #e2e8f0;
+    --text-light: #94a3b8;
+    --text-lighter: #64748b;
+    --bg-color: #0f172a;
+    --bg-darker: #020617;
+    --glass-bg: rgba(15, 23, 42, 0.85);
+    --glass-border: rgba(255, 255, 255, 0.05);
     --border-radius: 16px;
-    --shadow: 0 8px 32px rgba(31, 38, 135, 0.1);
+    --shadow: 0 8px 32px rgba(2, 6, 23, 0.5);
     --low-priority: #10b981;
     --medium-priority: #f59e0b;
     --high-priority: #ef4444;
     --in-progress: #3b82f6;
+    --done-color: #8b5cf6;
+}
+
+[data-theme="light"] {
+    --primary-color: #6366f1;
+    --primary-light: #e0e7ff;
+    --primary-dark: #4338ca;
+    --text-color: #1e293b;
+    --text-light: #64748b;
+    --text-lighter: #94a3b8;
+    --bg-color: #f8fafc;
+    --bg-darker: #f1f5f9;
+    --glass-bg: rgba(255, 255, 255, 0.85);
+    --glass-border: rgba(0, 0, 0, 0.05);
+    --shadow: 0 8px 32px rgba(31, 38, 135, 0.1);
 }
 
 * {
@@ -29,8 +48,9 @@ body {
     align-items: center;
     padding: 20px;
     background-image: 
-        radial-gradient(at 80% 0%, var(--primary-light) 0px, transparent 50%),
-        radial-gradient(at 0% 50%, var(--primary-light) 0px, transparent 50%);
+        radial-gradient(at 80% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+        radial-gradient(at 0% 50%, rgba(99, 102, 241, 0.1) 0px, transparent 50%);
+    transition: background 0.3s ease, color 0.3s ease;
 }
 
 .glass-container {
@@ -46,8 +66,9 @@ body {
     border-radius: var(--border-radius);
     padding: 32px;
     box-shadow: var(--shadow);
-    border: 1px solid rgba(255, 255, 255, 0.18);
+    border: 1px solid var(--glass-border);
     width: 100%;
+    transition: all 0.3s ease;
 }
 
 .app-header {
@@ -61,6 +82,35 @@ body {
     font-weight: 600;
     font-size: 28px;
     color: var(--text-color);
+    background: linear-gradient(90deg, var(--primary-color), var(--primary-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.app-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.theme-toggle {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: var(--text-color);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.theme-toggle:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: rotate(30deg);
 }
 
 .app-icon {
@@ -75,6 +125,7 @@ body {
     font-weight: 500;
     font-size: 20px;
     flex-shrink: 0;
+    transition: all 0.3s ease;
 }
 
 .input-row {
@@ -87,20 +138,25 @@ body {
 .input-row input {
     flex: 1;
     border: none;
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.1);
     outline: none;
     padding: 16px 20px;
     border-radius: 12px;
     font-size: 16px;
     color: var(--text-color);
-    border: 1px solid rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--glass-border);
     transition: all 0.3s ease;
     min-width: 0;
 }
 
+.input-row input::placeholder {
+    color: var(--text-lighter);
+}
+
 .input-row input:focus {
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
+    background: rgba(255, 255, 255, 0.15);
 }
 
 .input-row button {
@@ -121,7 +177,7 @@ body {
 }
 
 .input-row button:hover {
-    background: #3a56d4;
+    background: var(--primary-dark);
     transform: translateY(-1px);
 }
 
@@ -140,21 +196,33 @@ body {
 .task-options select {
     flex: 1;
     border: none;
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.1);
     outline: none;
     padding: 14px 16px;
     border-radius: 12px;
     font-size: 15px;
     color: var(--text-color);
-    border: 1px solid rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--glass-border);
     cursor: pointer;
     min-width: 0;
+    transition: all 0.3s ease;
+}
+
+.task-options input::placeholder,
+.task-options select::placeholder {
+    color: var(--text-lighter);
 }
 
 .task-options input:focus,
 .task-options select:focus {
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.task-options input::-webkit-calendar-picker-indicator {
+    filter: invert(0.8);
+    cursor: pointer;
 }
 
 .filter-options {
@@ -166,7 +234,7 @@ body {
 }
 
 .filter-btn {
-    background: rgba(255, 255, 255, 0.7);
+    background: rgba(255, 255, 255, 0.1);
     color: var(--text-light);
     padding: 10px 18px;
     border-radius: 20px;
@@ -183,7 +251,7 @@ body {
 }
 
 .filter-btn:hover:not(.active) {
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.2);
     color: var(--text-color);
 }
 
@@ -200,15 +268,15 @@ body {
     display: flex;
     flex-direction: column;
     transition: all 0.2s ease;
-    background: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.1);
     position: relative;
-    border: 1px solid rgba(0, 0, 0, 0.03);
+    border: 1px solid var(--glass-border);
     width: 100%;
 }
 
 .task-item:hover {
-    background: rgba(255, 255, 255, 0.95);
-    transform: translateY(-1px);
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
@@ -232,18 +300,22 @@ body {
     height: 12px;
     border-radius: 50%;
     flex-shrink: 0;
+    box-shadow: 0 0 8px currentColor;
 }
 
 .priority-low {
     background: var(--low-priority);
+    color: var(--low-priority);
 }
 
 .priority-medium {
     background: var(--medium-priority);
+    color: var(--medium-priority);
 }
 
 .priority-high {
     background: var(--high-priority);
+    color: var(--high-priority);
 }
 
 .task-title {
@@ -254,6 +326,7 @@ body {
     word-wrap: break-word;
     overflow-wrap: break-word;
     min-width: 0;
+    color: var(--text-color);
 }
 
 .task-actions {
@@ -280,7 +353,7 @@ body {
 }
 
 .task-actions button:hover {
-    background: rgba(0, 0, 0, 0.05);
+    background: rgba(255, 255, 255, 0.1);
     color: var(--text-color);
 }
 
@@ -306,14 +379,14 @@ body {
     font-weight: 500;
     cursor: pointer;
     border: none;
-    background: rgba(0, 0, 0, 0.05);
+    background: rgba(255, 255, 255, 0.1);
     color: var(--text-light);
     transition: all 0.2s ease;
     white-space: nowrap;
 }
 
 .status-btn:hover:not(.active) {
-    background: rgba(0, 0, 0, 0.1);
+    background: rgba(255, 255, 255, 0.2);
 }
 
 .status-btn.active {
@@ -329,7 +402,7 @@ body {
 }
 
 .status-done.active {
-    background: var(--primary-color);
+    background: var(--done-color);
 }
 
 .task-dates {
@@ -387,8 +460,14 @@ body {
     border-radius: 8px;
     font-size: 16px;
     outline: none;
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-color);
     width: 100%;
+    transition: all 0.3s ease;
+}
+
+.edit-input:focus {
+    background: rgba(255, 255, 255, 0.15);
 }
 
 .edit-options {
@@ -403,12 +482,21 @@ body {
 .edit-priority {
     flex: 1;
     padding: 10px 12px;
-    border: 1px solid rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--glass-border);
     border-radius: 8px;
     font-size: 14px;
     outline: none;
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-color);
     min-width: 120px;
+    transition: all 0.3s ease;
+}
+
+.edit-start:focus,
+.edit-due:focus,
+.edit-priority:focus {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: var(--primary-color);
 }
 
 .save-edit,
@@ -429,23 +517,44 @@ body {
 }
 
 .save-edit:hover {
-    background: #3a56d4;
+    background: var(--primary-dark);
 }
 
 .cancel-edit {
-    background: rgba(0, 0, 0, 0.1);
+    background: rgba(255, 255, 255, 0.1);
     color: var(--text-color);
 }
 
 .cancel-edit:hover {
-    background: rgba(0, 0, 0, 0.15);
+    background: rgba(255, 255, 255, 0.2);
 }
 
 .empty-state {
     text-align: center;
     padding: 40px 20px;
     color: var(--text-light);
-    font-style: italic;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.empty-state svg {
+    width: 60px;
+    height: 60px;
+    color: var(--text-lighter);
+    margin-bottom: 8px;
+}
+
+.empty-state h3 {
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+.empty-state p {
+    font-size: 14px;
+    color: var(--text-light);
 }
 
 @media (max-width: 768px) {

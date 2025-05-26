@@ -2,6 +2,7 @@
 const inputBox = document.getElementById('inputBox');
 const listContainer = document.getElementById('list-container');
 const emptyState = document.getElementById('emptyState');
+const themeToggle = document.getElementById('themeToggle');
 
 // Function to get today's date in YYYY-MM-DD format
 function getTodayDate() {
@@ -12,7 +13,27 @@ function getTodayDate() {
     return `${year}-${month}-${day}`;
 }
 
+// Theme toggle functionality
+function toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
+}
+
+// Initialize theme
+function initTheme() {
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+}
+
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize theme
+    initTheme();
+    
+    // Theme toggle event
+    themeToggle.addEventListener('click', toggleTheme);
+
     // Initialize date pickers
     flatpickr("#startDate", {
         dateFormat: "Y-m-d",
@@ -143,11 +164,17 @@ function setupTaskButtons(taskItem) {
             
             // Animation for status change
             if(status === 'done') {
-                taskItem.style.opacity = '0.8';
+                taskItem.style.opacity = '0.7';
                 taskItem.querySelector('.task-title').style.textDecoration = 'line-through';
+                taskItem.style.borderLeft = '3px solid var(--done-color)';
+            } else if (status === 'in-progress') {
+                taskItem.style.opacity = '1';
+                taskItem.querySelector('.task-title').style.textDecoration = 'none';
+                taskItem.style.borderLeft = '3px solid var(--in-progress)';
             } else {
                 taskItem.style.opacity = '1';
                 taskItem.querySelector('.task-title').style.textDecoration = 'none';
+                taskItem.style.borderLeft = '3px solid var(--text-light)';
             }
             
             saveData();
@@ -193,6 +220,16 @@ function editTask(taskItem) {
             </div>
         </div>
     `;
+    
+    // Initialize date pickers for edit form
+    flatpickr(".edit-start", {
+        dateFormat: "Y-m-d"
+    });
+    
+    flatpickr(".edit-due", {
+        dateFormat: "Y-m-d",
+        minDate: "today"
+    });
     
     // Event listeners for edit buttons
     taskItem.querySelector('.save-edit').addEventListener('click', function() {
@@ -296,7 +333,7 @@ function animateTask(task) {
 function updateEmptyState() {
     const tasks = document.querySelectorAll('.task-item');
     if (tasks.length === 0) {
-        emptyState.style.display = 'block';
+        emptyState.style.display = 'flex';
     } else {
         emptyState.style.display = 'none';
     }
@@ -314,11 +351,11 @@ function saveData() {
             due: task.dataset.due || ''
         });
     });
-    window.taskData = tasks;
+    localStorage.setItem('tasks', JSON.stringify(tasks));
 }
 
 function showTasks() {
-    const savedTasks = window.taskData || [];
+    const savedTasks = JSON.parse(localStorage.getItem('tasks')) || [];
     
     savedTasks.forEach(task => {
         const taskItem = document.createElement('li');
@@ -335,8 +372,13 @@ function showTasks() {
         setupTaskButtons(taskItem);
         
         if(task.status === 'done') {
-            taskItem.style.opacity = '0.8';
+            taskItem.style.opacity = '0.7';
             taskItem.querySelector('.task-title').style.textDecoration = 'line-through';
+            taskItem.style.borderLeft = '3px solid var(--done-color)';
+        } else if (task.status === 'in-progress') {
+            taskItem.style.borderLeft = '3px solid var(--in-progress)';
+        } else {
+            taskItem.style.borderLeft = '3px solid var(--text-light)';
         }
     });
     
