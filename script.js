@@ -109,6 +109,9 @@ async function addTask() {
     updateEmptyState();
 
     setupTaskButtons(taskItem);
+
+    showToast('Task adaugat cu succes!');
+
 }
 
 function createTaskHTML(text, priority, startDate, dueDate, status) {
@@ -216,19 +219,26 @@ function setupTaskButtons(taskItem) {
     
     // Delete button
     taskItem.querySelector('.delete-btn').addEventListener('click', async function() {
-        // Dacă task-ul are un id din baza de date (MongoDB)
-        const taskId = taskItem.dataset.dbid; // presupunem că salvezi _id-ul MongoDB în data-dbId
-        if (taskId) {
-            await fetch(`http://localhost:3001/tasks/${taskId}`, { method: 'DELETE' });
+        const confirm = await showConfirmDialog({
+            title: "Ștergere task",
+            message: "Sigur vrei să ștergi acest task? Această acțiune nu poate fi anulată.",
+            confirmText: "Șterge",
+            cancelText: "Anulează"
+        });
+        if (confirm) {
+            const taskId = taskItem.dataset.dbid;
+            if (taskId) {
+                await fetch(`http://localhost:3001/tasks/${taskId}`, { method: 'DELETE' });
+            }
+            taskItem.style.transform = 'translateX(100%)';
+            taskItem.style.opacity = '0';
+            setTimeout(() => {
+                taskItem.remove();
+                saveData();
+                updateEmptyState();
+                showToast('Task șters cu succes!');
+            }, 200);
         }
-        // Animatie și ștergere din UI/localStorage
-        taskItem.style.transform = 'translateX(100%)';
-        taskItem.style.opacity = '0';
-        setTimeout(() => {
-            taskItem.remove();
-            saveData();
-            updateEmptyState();
-        }, 200);
     });
 }
 
@@ -306,6 +316,7 @@ function editTask(taskItem) {
         setupTaskButtons(taskItem);
         saveData();
     }
+    showToast('Task editat cu succes!');
 });
 
     
@@ -452,26 +463,38 @@ inputBox.addEventListener("keypress", function(event) {
 });
 
 
-document.getElementById('exportToDB').addEventListener('click', exportTasksToDB);
 
-async function exportTasksToDB() {
-    const savedTasks = JSON.parse(localStorage.getItem('tasks')) || [];
-    for (const task of savedTasks) {
-        // Trimite fiecare task către server
-        await fetch('http://localhost:3001/tasks', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                text: task.text,
-                status: task.status,
-                priority: task.priority,
-                start: task.start,
-                due: task.due
-            })
-        });
-    }
-    alert('Task-urile au fost exportate în baza de date!');
+
+function showToast(message) {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.classList.add('show');
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 2200);
 }
 
+function showConfirmDialog({title = "Confirmare", message = "Ești sigur?", confirmText = "Șterge", cancelText = "Anulează"} = {}) {
+    return new Promise((resolve) => {
+        const overlay = document.createElement('div');
+        overlay.className = 'confirm-overlay';
+        overlay.innerHTML = `
+            <div class="confirm-dialog">
+                <h3>${title}</h3>
+                <p>${message}</p>
+                <button class="confirm-btn">${confirmText}</button>
+                <button class="cancel-btn">${cancelText}</button>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+
+        overlay.querySelector('.confirm-btn').onclick = () => {
+            overlay.remove();
+            resolve(true);
+        };
+        overlay.querySelector('.cancel-btn').onclick = () => {
+            overlay.remove();
+            resolve(false);
+        };
+    });
+}
